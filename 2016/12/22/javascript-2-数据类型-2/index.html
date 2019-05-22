@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2"/>
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1"/>
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="ObjectObject 类型是一种引用数据类型。它指向内存中被标识引用的一个区块。为一个变量赋予一个引用类型数据，变量将指向改引用数据的原始值，而不创建副本。 不同于字符串的值类型。字符串在赋值时，会创建副本，具体情况：12345var a = &apos;hello&apos;;var b = a;b += &apos; world&apos;;console.log(a);     // helloconsole.log(b);">
+<meta name="keywords" content="javascript">
+<meta property="og:type" content="article">
+<meta property="og:title" content="javascript(2) 数据类型(2)">
+<meta property="og:url" content="http://yoursite.com/2016/12/22/javascript-2-数据类型-2/index.html">
+<meta property="og:site_name" content="xuezi&#39;s blog">
+<meta property="og:description" content="ObjectObject 类型是一种引用数据类型。它指向内存中被标识引用的一个区块。为一个变量赋予一个引用类型数据，变量将指向改引用数据的原始值，而不创建副本。 不同于字符串的值类型。字符串在赋值时，会创建副本，具体情况：12345var a = &apos;hello&apos;;var b = a;b += &apos; world&apos;;console.log(a);     // helloconsole.log(b);">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-05-22T02:46:37.785Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="javascript(2) 数据类型(2)">
+<meta name="twitter:description" content="ObjectObject 类型是一种引用数据类型。它指向内存中被标识引用的一个区块。为一个变量赋予一个引用类型数据，变量将指向改引用数据的原始值，而不创建副本。 不同于字符串的值类型。字符串在赋值时，会创建副本，具体情况：12345var a = &apos;hello&apos;;var b = a;b += &apos; world&apos;;console.log(a);     // helloconsole.log(b);">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2016/12/22/javascript-2-数据类型-2/"/>
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>javascript(2) 数据类型(2) | xuezi's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">xuezi's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>Archives</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/22/javascript-2-数据类型-2/"/>
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xuezi"/>
+      <meta itemprop="description" content="javascript lover"/>
+      <meta itemprop="image" content="/images/avatar.gif"/>
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xuezi's blog"/>
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">javascript(2) 数据类型(2)
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2016-12-22 11:48:48" itemprop="dateCreated datePublished" datetime="2016-12-22T11:48:48+08:00">2016-12-22</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2019-05-22 10:46:37" itemprop="dateModified" datetime="2019-05-22T10:46:37+08:00">2019-05-22</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Object"><a href="#Object" class="headerlink" title="Object"></a>Object</h2><p>Object 类型是一种引用数据类型。它指向内存中被标识引用的一个区块。为一个变量赋予一个引用类型数据，变量将指向改引用数据的原始值，而不创建副本。</p>
+<p>不同于字符串的值类型。字符串在赋值时，会创建副本，具体情况：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> b = a;</span><br><span class="line">b += <span class="string">' world'</span>;</span><br><span class="line"><span class="built_in">console</span>.log(a);     <span class="comment">// hello</span></span><br><span class="line"><span class="built_in">console</span>.log(b);     <span class="comment">// hello world</span></span><br></pre></td></tr></table></figure></p>
+<p>值类型数据为 b 创建了副本，b 的值改变创建了一个新的字符串，不改变 a 的原始值</p>
+<p>区别于Object<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = &#123; <span class="attr">a</span>: <span class="string">'hello'</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> b = a;</span><br><span class="line">b.b = <span class="string">'world'</span>;</span><br><span class="line"><span class="built_in">console</span>.log(a);     <span class="comment">// &#123; a: 'hello', b: 'world' &#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(b);     <span class="comment">// &#123; a: 'hello', b: 'world' &#125;</span></span><br></pre></td></tr></table></figure></p>
+<p>引用类型数据， var b = a 是将 a 的引用传给 b， a, b 指向同一个内存引用区块，改变 b 的数据实际上是改变内存中指向的区块所存储的内容，因此 a 引用到的数据也跟着改变。</p>
+<h2 id="引用数据比较"><a href="#引用数据比较" class="headerlink" title="引用数据比较"></a>引用数据比较</h2><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = &#123; <span class="attr">a</span>: <span class="string">'hello world'</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> b = a;</span><br><span class="line">a == b;       <span class="comment">// true</span></span><br><span class="line">a === b;      <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>因为 b 是使用了 a 的引用，a，b 指向内存的同一区块，所以 a 跟 b 是等价的。但是<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = &#123; <span class="attr">a</span>: <span class="string">'hello world'</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> b = &#123; <span class="attr">a</span>: <span class="string">'hello world'</span> &#125;;</span><br><span class="line">a == b;       <span class="comment">// false</span></span><br><span class="line">a === b;      <span class="comment">// false</span></span><br></pre></td></tr></table></figure></p>
+<p>创建了一个新的 Object 数据给 b，虽然 a，b 的字面量是一样的，但是 a 与 b 具有不同的引用，对于引用数据的比较，实际是是比较它们的引用。</p>
+<p>引用数据变量实际上只保存了引用的内存指针，使用时，是从指针中往内存检索数据。即使字面量一样，但是引用不同，变量就不是等价的。</p>
+<h2 id="property"><a href="#property" class="headerlink" title="property"></a>property</h2><p>对象被看作是一组属性的集合，ECMAScript定义的对象中有两种属性：数据属性和访问器属性。</p>
+<p>数据属性是键值对，并且每个数据属性拥有下列特性:</p>
+<ul>
+<li>[Value]]</li>
+<li>[[Writable]]</li>
+<li>[[Enumerable]]</li>
+<li>[[Configurable]]</li>
+</ul>
+<p>一个 Object 对象是一组键值对的集合，键和值之间的映射关系，键是一个字符串，值可以是任意数据类型。</p>
+<p>function 是一个附带可被调用功能的特殊对象</p>
+<p>javascript中，很多原型对象数据类型，都是基于 Object 的派生，如：Date, Array, Map, WeakMap 等。</p>
+<h2 id="Array"><a href="#Array" class="headerlink" title="Array"></a>Array</h2><p>数组是通过整数标识键，并与长度进行内联的常规对象。键作为数组的游标，与字符串的索引类似。</p>
+<p>通过了解数组的构成，可以模拟出数组的数据结构。</p>
+<p>*注意，arguments</p>
+<p>在 javascript 中，函数的传参被保存在 arguments 对象中，arguments 是一个类数组对象，并非是数组。它和数组一样，具有整数有序游标，和长度关系。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">x</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="built_in">arguments</span>);     <span class="comment">// 执行到这里会输出 Arguments[1, 2]</span></span><br><span class="line">  <span class="built_in">arguments</span>.push(<span class="number">3</span>);          <span class="comment">// Uncaught TypeError: arguments.push is not a function</span></span><br><span class="line">&#125;</span><br><span class="line">x(<span class="number">1</span>, <span class="number">2</span>);</span><br></pre></td></tr></table></figure></p>
+<p>展开 Arguments[1, 2]，可以看到它的数据结构是一个整数游标键，并具有 length。与数组结构相似。但并不是一个数组，所以不具备数组的方法。</p>
+<p>javascript 可以通过 call 和 apply 方法继承。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">x</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="built_in">Array</span>.prototype.push.call(<span class="built_in">arguments</span>, <span class="number">3</span>)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="built_in">arguments</span>);     <span class="comment">// 执行到这里会输出 Arguments[1, 2, 3]</span></span><br><span class="line">&#125;</span><br><span class="line">x(<span class="number">1</span>, <span class="number">2</span>);</span><br></pre></td></tr></table></figure></p>
+<p>构建一个类数组对象</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = &#123; <span class="number">0</span>: <span class="string">'a'</span>, <span class="number">1</span>: <span class="string">'b'</span>, <span class="number">2</span>: <span class="string">'c'</span>, <span class="attr">length</span>: <span class="number">3</span> &#125;;</span><br><span class="line"><span class="built_in">Array</span>.prototype.forEach.call(a, <span class="function"><span class="keyword">function</span>(<span class="params">value, index</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(value,<span class="string">','</span>,index);     <span class="comment">// 会依次输出 a, 0   b, 1   c, 2</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/javascript/" rel="tag"># javascript</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/12/22/javascript-1-数据类型-1/" rel="next" title="javascript(1) 数据类型(1)">
+                <i class="fa fa-chevron-left"></i> javascript(1) 数据类型(1)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/12/29/手动实现简单模版数据绑定/" rel="prev" title="手动实现简单模版数据绑定">
+                手动实现简单模版数据绑定 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Xuezi</p>
+              <div class="site-description motion-element" itemprop="description">javascript lover</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">15</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Object"><span class="nav-number">1.</span> <span class="nav-text">Object</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#引用数据比较"><span class="nav-number">2.</span> <span class="nav-text">引用数据比较</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#property"><span class="nav-number">3.</span> <span class="nav-text">property</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Array"><span class="nav-number">4.</span> <span class="nav-text">Array</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xuezi</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.1.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/schemes/muse.js?v=7.1.1"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

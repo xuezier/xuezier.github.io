@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2"/>
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1"/>
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Yarn 是一个Facebook推出的新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。 对于npm，最大的缺点就是慢，特别是对于国内的开发者来说，墙外的世界总是爱不释手又遥不可及。一个大点的依赖包可能需要近半个小时才能down下来。还好我们还有cnpm，还有taobao的镜像源。 yarn到底有多快">
+<meta name="keywords" content="yarn">
+<meta property="og:type" content="article">
+<meta property="og:title" content="怎么看待facebook包管理器 yarn">
+<meta property="og:url" content="http://yoursite.com/2016/10/26/怎么看待facebook包管理器-yarn/index.html">
+<meta property="og:site_name" content="xuezi&#39;s blog">
+<meta property="og:description" content="Yarn 是一个Facebook推出的新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。 对于npm，最大的缺点就是慢，特别是对于国内的开发者来说，墙外的世界总是爱不释手又遥不可及。一个大点的依赖包可能需要近半个小时才能down下来。还好我们还有cnpm，还有taobao的镜像源。 yarn到底有多快">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://cdn-public.imxuezi.com/Yarn-796x398.jpg">
+<meta property="og:updated_time" content="2019-05-22T02:46:37.785Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="怎么看待facebook包管理器 yarn">
+<meta name="twitter:description" content="Yarn 是一个Facebook推出的新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。 对于npm，最大的缺点就是慢，特别是对于国内的开发者来说，墙外的世界总是爱不释手又遥不可及。一个大点的依赖包可能需要近半个小时才能down下来。还好我们还有cnpm，还有taobao的镜像源。 yarn到底有多快">
+<meta name="twitter:image" content="http://cdn-public.imxuezi.com/Yarn-796x398.jpg">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2016/10/26/怎么看待facebook包管理器-yarn/"/>
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>怎么看待facebook包管理器 yarn | xuezi's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">xuezi's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>Archives</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/26/怎么看待facebook包管理器-yarn/"/>
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xuezi"/>
+      <meta itemprop="description" content="javascript lover"/>
+      <meta itemprop="image" content="/images/avatar.gif"/>
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xuezi's blog"/>
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">怎么看待facebook包管理器 yarn
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2016-10-26 11:29:47" itemprop="dateCreated datePublished" datetime="2016-10-26T11:29:47+08:00">2016-10-26</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2019-05-22 10:46:37" itemprop="dateModified" datetime="2019-05-22T10:46:37+08:00">2019-05-22</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><img src="http://cdn-public.imxuezi.com/Yarn-796x398.jpg" alt=""></p>
+<p>Yarn 是一个Facebook推出的新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。</p>
+<p>对于npm，最大的缺点就是慢，特别是对于国内的开发者来说，墙外的世界总是爱不释手又遥不可及。一个大点的依赖包可能需要近半个小时才能down下来。还好我们还有cnpm，还有taobao的镜像源。</p>
+<p>yarn到底有多快，能不能取代npm安装，下面通过安装几个模块来验证一下。</p>
+<h2 id="安装相同的包express所耗费的时间"><a href="#安装相同的包express所耗费的时间" class="headerlink" title="安装相同的包express所耗费的时间"></a>安装相同的包express所耗费的时间</h2><p>为了不浪费时间做无谓的测试，就不直接测试npm的源了，而是将npm的源更换为我已经搭好的国内镜像服务。</p>
+<p>  yarn使用默认源，npm使用国内镜像<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 因为npm不能直接输出安装时间，所以我们选择通过代码检测整个程序的穿透时间来做测量</span></span><br><span class="line"><span class="meta">'use strict'</span>;</span><br><span class="line"><span class="keyword">let</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">test</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.time(<span class="string">`<span class="subst">$&#123;m&#125;</span> finished in :`</span>);</span><br><span class="line">  child_process.exec(<span class="string">`<span class="subst">$&#123;m == <span class="string">'npm'</span> &amp;&amp; (m + <span class="string">' install'</span>) || (m + <span class="string">' add'</span>)&#125;</span> express`</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.timeEnd(<span class="string">`<span class="subst">$&#123;m&#125;</span> finished in :`</span>);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">test(<span class="string">'npm'</span>);  <span class="comment">// finished in 4331.464ms</span></span><br><span class="line">test(<span class="string">'npm'</span>);  <span class="comment">// finished in 1809.988ms</span></span><br><span class="line"><span class="comment">// 清空掉安装历史，继续执行以下代码</span></span><br><span class="line">test(<span class="string">'yarn'</span>);  <span class="comment">// finished in 2810.565ms</span></span><br><span class="line">test(<span class="string">'yarn'</span>);  <span class="comment">// finished in 1106.524ms</span></span><br></pre></td></tr></table></figure></p>
+<p>  将yarn安装源换成与npm一样的国内镜像<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 为了测试整个项目的可用性，挑选了一个依赖较多的项目来做干净安装测试</span><br><span class="line">yarn install  // 43.27s</span><br><span class="line">npm install   // &gt;100s</span><br><span class="line">// 该测试都是在使用同一源的情况下进行</span><br></pre></td></tr></table></figure></p>
+<p>  安装在我私有源上的私有包<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在开发的时候，我们搭建私有npm代理服务的目的也是为了管理只有自己使用的一些内部扩展包，如果不支持私有包的安装，yarn就无法取代传统的npm</span></span><br><span class="line"><span class="meta">'use strict'</span>;</span><br><span class="line"><span class="keyword">let</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">test</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.time(<span class="string">`<span class="subst">$&#123;m&#125;</span> finished in :`</span>);</span><br><span class="line">  child_process.exec(<span class="string">`<span class="subst">$&#123;m == <span class="string">'npm'</span> &amp;&amp; (m + <span class="string">' install'</span>) || (m + <span class="string">' add'</span>)&#125;</span> @ym/rpc`</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.timeEnd(<span class="string">`<span class="subst">$&#123;m&#125;</span> finished in :`</span>);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">test(<span class="string">'npm'</span>);  <span class="comment">// finished in 7547.653ms</span></span><br><span class="line">test(<span class="string">'npm'</span>);  <span class="comment">// finished in 5121.880ms</span></span><br><span class="line"><span class="comment">// 清空掉安装历史，继续执行以下代码</span></span><br><span class="line">test(<span class="string">'yarn'</span>);  <span class="comment">// finished in 2752.662ms</span></span><br><span class="line">test(<span class="string">'yarn'</span>);  <span class="comment">// finished in 1140.099ms</span></span><br></pre></td></tr></table></figure></p>
+<p>yarn在即使不使用国内镜像访问的时候，安装公有包的速度依然比使用国内镜像的npm快，在使用同是国内镜像源的时候，优势更是明显。</p>
+<h3 id="测试安装整个项目依赖"><a href="#测试安装整个项目依赖" class="headerlink" title="测试安装整个项目依赖"></a>测试安装整个项目依赖</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 为了测试整个项目的可用性，挑选了一个依赖较多的项目来做干净安装测试</span><br><span class="line">yarn install  // 43.27s</span><br><span class="line">npm install   // &gt;100s</span><br><span class="line">// 该测试都是在使用同一源的情况下进行</span><br></pre></td></tr></table></figure>
+<h2 id="focus"><a href="#focus" class="headerlink" title="focus"></a>focus</h2><p>以上安装测试每个都至少测试3次，每次测试都需清空掉安装信息，平均安装时间误差波动不大</p>
+<h2 id="综述"><a href="#综述" class="headerlink" title="综述"></a>综述</h2><p>yarn用作包管理器，在速度上确实有很大优势，也支持私有npm包管理安装。</p>
+<p>除了有时候会有不稳定的情况出现，整体上还是很不错的，只要稍加优化，作为npm的替代品是没有问题</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/yarn/" rel="tag"># yarn</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/26/koa-qx-router-XueZier/" rel="next" title="koa-qx-router | XueZier">
+                <i class="fa fa-chevron-left"></i> koa-qx-router | XueZier
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/11/29/使用redis订阅实现定时任务-node-js/" rel="prev" title="使用redis订阅实现定时任务(node.js)">
+                使用redis订阅实现定时任务(node.js) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Xuezi</p>
+              <div class="site-description motion-element" itemprop="description">javascript lover</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">15</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装相同的包express所耗费的时间"><span class="nav-number">1.</span> <span class="nav-text">安装相同的包express所耗费的时间</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#测试安装整个项目依赖"><span class="nav-number">1.1.</span> <span class="nav-text">测试安装整个项目依赖</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#focus"><span class="nav-number">2.</span> <span class="nav-text">focus</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#综述"><span class="nav-number">3.</span> <span class="nav-text">综述</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xuezi</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.1.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/schemes/muse.js?v=7.1.1"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
