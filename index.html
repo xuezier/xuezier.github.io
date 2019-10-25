@@ -290,6 +290,393 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/24/egg-打造高可用服务集群/"/>
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xuezi"/>
+      <meta itemprop="description" content="javascript lover"/>
+      <meta itemprop="image" content="/images/avatar.gif"/>
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xuezi's blog"/>
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/10/24/egg-打造高可用服务集群/" class="post-title-link" itemprop="url">egg.js 打造高可用服务集群</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-10-24 22:40:47" itemprop="dateCreated datePublished" datetime="2019-10-24T22:40:47+08:00">2019-10-24</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Modified: 2019-10-25 01:06:02" itemprop="dateModified" datetime="2019-10-25T01:06:02+08:00">2019-10-25</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Q4 了，秋高气爽适合养生。每天昏昏欲睡的我，今晚突然血气上涌，又来滥竽充数发表 yy 文了😁。</p>
+<p>今日份主题：高可用服务！</p>
+<p>以下服务案例是以 egg.js 为基础搭建。</p>
+<h2 id="理解高可用服务"><a href="#理解高可用服务" class="headerlink" title="理解高可用服务"></a>理解高可用服务</h2><p>高可用也就是大家常说的HA（High Availability），高可用的引入，是通过设计减少系统不能提供服务的时间，而不能保证系谢统可用性是能达到100%的！</p>
+<ul>
+<li>不能保证系统可用性是能达到100%的！</li>
+<li>不能保证系统可用性是能达到100%的！</li>
+<li>不能保证系统可用性是能达到100%的！</li>
+</ul>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>目前我们公司的服务部署主要分两种，一种是传统的多 ecs 服务器分布式集群，一种是 k8s 托管集群服务。</p>
+<p>题主负责的服务大多是以 ecs 部署为主💻，内容展开也是以此为基础。</p>
+<p>先看一组图</p>
+<h2 id="高可用的准则"><a href="#高可用的准则" class="headerlink" title="高可用的准则"></a>高可用的准则</h2><p>基本上保证服务的高可用遵循两个原则</p>
+<ul>
+<li>集群化</li>
+<li>故障自动化处理</li>
+</ul>
+<p>集群化主要还是分两类</p>
+<ul>
+<li>单机进程集群</li>
+<li>多机集群</li>
+</ul>
+<p>集群化的部署本身也是为了规避单点（单进程、单机）故障导致的服务不可用的问题。当集群中某个服务/进程挂掉的时候，该单点所承载的流量会被其他服务/进程分担。</p>
+<h3 id="单机进程集群"><a href="#单机进程集群" class="headerlink" title="单机进程集群"></a>单机进程集群</h3><p>单机进行多进程集群的部署，当集群中的某一个进程挂掉的时候，应该感知该进程的故障，及时将进程进行清理，流量均摊到其他进程，直到故障进程被重新拉起。</p>
+<p>通常我们为了合理利用 cpu 资源，会根据 cpu 核心的数量启动相应数量的进程，但在单核机器上时，cpu 的核心数只有 1，针对单核机器需要做特殊处理。</p>
+<p>我们可以通过一个简单的例子将启动命令通过脚本文件进行包装<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// scripts/start.js</span></span><br><span class="line"><span class="keyword">const</span> os = <span class="built_in">require</span>(<span class="string">'os'</span>);</span><br><span class="line"><span class="keyword">const</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> cores = os.cpus().length;</span><br><span class="line"><span class="comment">// 当核心数只有 1 的时候，启动两个 worker 进程，其他情况根据 cpu 核心数启动 worker 进程</span></span><br><span class="line"><span class="keyword">const</span> workers = cores === <span class="number">1</span> ? <span class="number">2</span>: cores;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> command = <span class="string">'npm'</span>;</span><br><span class="line"><span class="keyword">const</span> argv = [<span class="string">'start'</span>, <span class="string">'--'</span>, <span class="string">`--workers=<span class="subst">$&#123;worker&#125;</span>`</span>];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> child = child_process.spawn(command, argv);</span><br><span class="line">child.stdout.on(<span class="string">'data'</span>, (data) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">`stdout: <span class="subst">$&#123;data&#125;</span>`</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">child.stderr.on(<span class="string">'data'</span>, (data) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.error(<span class="string">`stderr: <span class="subst">$&#123;data&#125;</span>`</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>整理一下 package.json 的 scripts<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"scripts"</span>: &#123;</span><br><span class="line">        <span class="attr">"start"</span>: <span class="string">"eggctl start --daemon --title=egg-server-myProject"</span>,</span><br><span class="line">        <span class="attr">"scripts:start"</span>: <span class="string">"node scripts/start"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这样子当我们通过指令 <code>npm run scripts:start</code> 来启动服务的时候 ，可以先获取当前机器的 cpu 核心数量来合理启动相应数量的 worker 进程。</p>
+<h3 id="多机集群"><a href="#多机集群" class="headerlink" title="多机集群"></a>多机集群</h3><p>多机集群的目的是为了防止单机部署的一些不可控因素导致的服务不可用的情况，比如某些意外导致的宕机😣。。。可以及时的将宕机的流量均摊到集群中的其他机器上去。</p>
+<p>多机集群通常通过负载均衡让每个节点都分担请求流量。据我了解到的阿里 slb 服务是改造过的 nginx - Tengine。原理和 nginx 实现的负载均衡类似，只是它本身就是高可用的服务，我们不需要去维护这个负载均衡服务。</p>
+<h3 id="资源冗余"><a href="#资源冗余" class="headerlink" title="资源冗余"></a>资源冗余</h3><p>不要为了省钱而采用够用就好的资源配置💥。当一台 2c4g 的机器能够承载 200qps 的时候，需要对机器的硬件资源做冗余，比如升级成 4c8g。否则当某个节点突然请求量上升，或系统本身服务在做一些处理比如日志轮转的时候，会造成资源竞争，导致一些不可控的问题。</p>
+<p>关于资源冗余的点，ecs 部署相对于 k8s 来说，确实是属于资源编排相对浪费的的部署方式。</p>
+<h3 id="keepalived"><a href="#keepalived" class="headerlink" title="keepalived"></a>keepalived</h3><p>在负载均衡(slb)中，通过 <em>健康检查</em> 检测服务器的工作状态，如果该服务器出现故障被检测到，将其剔除服务器群，直至正常工作后，自动检测到并加入到服务器群里面。</p>
+<h3 id="预发布"><a href="#预发布" class="headerlink" title="预发布"></a>预发布</h3><p>通常的测试环境与线上环境存在一些差异，可能会规避掉一些上线部署的风险😨。😖为了能保证代码上线能正常启动服务，应该预留一个与线上几乎一致的内部环境（网络，依赖，配置信息等）- 我们姑且称之为预发机器，先进行代码的预发布流程。当服务在预发机器能正常工作后，才将代码往线上发布。</p>
+<h3 id="版本迭代的平滑"><a href="#版本迭代的平滑" class="headerlink" title="版本迭代的平滑"></a>版本迭代的平滑</h3><p>互联网时代的发展是迅速的，需求每天都在变化。新的需求每天都在产生🔪，服务本身不会保持一成不变。我们每天都有大量的需求更新和 bug😣 fix 上线。</p>
+<p>保证代码发布的平滑，是高可用中不可缺少的一环，对于 egg.js 服务集群如何做平滑重启，可以参考我之前发表的文章😁</p>
+<p><a href="https://zhuanlan.zhihu.com/p/84632879" target="_blank" rel="noopener">《Egg.js 多机平滑重启实践》</a></p>
+<h3 id="api-过渡"><a href="#api-过渡" class="headerlink" title="api 过渡"></a>api 过渡</h3><p>通常随着版本的长期迭代，旧的 api 可能已经不满足业务需求，需要对 api 进行升级，这个时候新旧 api 是不兼容的🤔。</p>
+<p>当新旧 api 进行切换的时候，会产生某些业务还依赖旧的 api，如果直接将旧的 api 进行改造，很可能对某些业务带来影响。</p>
+<p>出现这种情况，从我们处理的经验上讲，新的 api 已经不兼容旧版本的 api，那么还是会保留旧的 api 接口，另外设计 v2 版本的新 api，保证新 api 在上线的时候，新旧 api 共存，直到业务方改造完毕，才废除旧版本的 api🙋。</p>
+<h3 id="服务降级"><a href="#服务降级" class="headerlink" title="服务降级"></a>服务降级</h3><p>在突发大流量的情况下，可能会导致服务整体质量下滑的情况。这时候可以做服务降级来关闭一些不重要的服务来降低资源消耗。</p>
+<p>对于服务降级的方案，我的考虑是这样的</p>
+<ul>
+<li>统一的分布式开关，由配置中心（如 apollo）管理；</li>
+<li>服务接入开关，并在一些非关键部位/接口上引入开关。接口方面可以通过中间件做开关；</li>
+<li>操作配置中心的开关项，可以动态控制开关；</li>
+<li>服务被通知开关变更，及时修改内部接口开关；</li>
+</ul>
+<h3 id="监控"><a href="#监控" class="headerlink" title="监控"></a>监控</h3><p>前瞻性的监控预警是对服务高可用的一个保障。多维度的监控警报可以在故障的第一时间将问题抛到相应的负责人手上处理🐛。</p>
+<p>监控的方式有很多，基础的监控有依赖阿里的云监控，rds、redis、ecs 等监控。</p>
+<p>node 相关服务可以使用 alinode 做一些应用/主机级别的监控。</p>
+<p>可选的一些监控体系如 elk 日志监控，sentry，opentracing 慢链路监控等。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总之保证服务的高可用，简单的一句话就是不要把鸡蛋都放在一个篮子里，也不要让臭鸡蛋坏在篮子里。</p>
+<h2 id="one-more-thing"><a href="#one-more-thing" class="headerlink" title="one more thing"></a>one more thing</h2><p>最后，该来的还是要来😁</p>
+<p>如果你也对 eggjs，对 nodejs，对 js 有兴趣，有想探讨的问题，可以联系我的邮箱📮<a href="mailto:tunan@gaoding.com" target="_blank" rel="noopener">tunan@gaoding.com</a>。</p>
+<p>如果你对我们的工作感兴趣，想和我们一起攻克难关的话，也可以直接将简历发到我的邮箱。</p>
+<p>我们有专职的 nodejs 研发工程师，有在厦门具有相当影响力的前端团队，相信喜欢 js 喜欢 nodejs 的你会喜欢我们的团队～</p>
+<p>我们是：稿定（厦门）科技有限公司 - 平台技术部</p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/15/how-to-design-a-koa-middleware/"/>
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xuezi"/>
+      <meta itemprop="description" content="javascript lover"/>
+      <meta itemprop="image" content="/images/avatar.gif"/>
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xuezi's blog"/>
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/10/15/how-to-design-a-koa-middleware/" class="post-title-link" itemprop="url">how to design a koa middleware</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-10-15 20:44:55 / Modified: 21:40:08" itemprop="dateCreated datePublished" datetime="2019-10-15T20:44:55+08:00">2019-10-15</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>该中间件设计规范是我们在平时工作中实践总结的经验之谈，欢迎小伙伴吐槽改善。</p>
+<h3 id="Middleware"><a href="#Middleware" class="headerlink" title="Middleware"></a>Middleware</h3><p>中间件在 node.js 的 web 应用中是非常常见的一个功能设计。众多 web 框架（express、koa、nest.js、connect 等）都有中间件的设计支持。虽然不同框架中间件没有统一的设计规范，但在功能和实现上几乎是异曲同工的。</p>
+<p>中间件在 web 服务中主要的作用就是访问 request 和 response 对象，完成特定任务后下发到下一个中间件。中间件的设计极大的对请求进行了分片化，可以让很多原本需要在 controller 中处理的问题更方便的做统一的逻辑处理。</p>
+<p>我根据中间件的生成主要将其分为两种</p>
+<ul>
+<li>工厂化中间件<ul>
+<li>简单来讲就是有一个工厂函数，根据传入的参数动态生成的中间件，这样的中间件会根据传入的参数不同可能会有不同的处理逻辑</li>
+</ul>
+</li>
+<li>静态中间件<ul>
+<li>从一开始就确定工作内容的中间件</li>
+</ul>
+</li>
+</ul>
+<h3 id="设计规范"><a href="#设计规范" class="headerlink" title="设计规范"></a>设计规范</h3><p>middleware 和 controller 都可以访问 request 和 response 对象，也可完成和 controller 一样的事情，那么 middleware 和 controller 有什么区别呢？</p>
+<p>首先 middleware 的设计应该遵守以下几个规范：</p>
+<ul>
+<li>去中心化的</li>
+<li>避免闭包设计</li>
+<li>无论是工厂化中间件还是静态中间件，一旦确定在 runtime 就是不可变更的</li>
+</ul>
+<h4 id="去中心化"><a href="#去中心化" class="headerlink" title="去中心化"></a>去中心化</h4><p>这是和 controller 设计区别最大的地方。</p>
+<p>事实上，controller 也可以算是一个中间件，但是 controller 通常是设计为具有业务相关性的方法，我将 controller 在 node 中的设计定位 fake-middleware。</p>
+<p>而我们需要真正去设计的 middleware 应该是具有业务无关性的，一个无状态的去中心化的方法。middleware 应该具有更强的通用普适性，这个通用性分为两种，一种是应用相关的，一种是应用无关的。</p>
+<p>先说应用相关性的中间件：例如一个短信应用，通常会有各种防刷机制，这种预防机制通常是在中间件中实现的。短信的防刷和短信发送本身是业务无关的，但是短信防刷机制通常只在短信相关应用（用户系统，短信系统等）中需要。这种中间件就是具有应用相关性的。</p>
+<p>再说应用无关性的中间件：很常见的一些中间件如 cors、body-parser 等，都是具有非常强的通用性，而且和任何类型应用都没有相关性。</p>
+<p>最后，无状态的去中心化怎么理解？举个例子，在 Java 应用中，controller 通常会先对请求的参数做参数检查。在 node 中可以通过中间件来做统一的参数检查。但是不同的接口通常都需要不同的参数，如果每个接口都设计一个 middleware 来做参数检查，那就显得很鸡肋（我干嘛做这种蠢事？）。但实际上我还真见到过😂。</p>
+<p>以 egg 为例，我们通过两个例子看一下<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// example-1 - bad</span></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">ParamterValidateMiddleware</span>(<span class="params">ctx, next</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; body &#125; = ctx.request;</span><br><span class="line"></span><br><span class="line">    ctx.validate(&#123;</span><br><span class="line">        param1: <span class="string">'string'</span>,</span><br><span class="line">        param2: <span class="string">'number'</span></span><br><span class="line">    &#125;, body);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">await</span> next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// example-2 - good</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ParamterValidateMiddlewareFactory</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">ParamterValidateMiddleware</span>(<span class="params">ctx, next</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; body &#125; = ctx.request;</span><br><span class="line">        <span class="keyword">const</span> &#123; rules &#125; = options;</span><br><span class="line"></span><br><span class="line">        ctx.validate(rules, body);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">await</span> next();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>example-1 的设计只能针对单一的接口，如果参数发生变动，就需要修改对应的 middlware 方法。</p>
+<p>example-2 将参数校验进行工厂化设计，通过传入的 rules，动态生成对应接口所需的中间件，那么就可以在全局维护统一的参数表。</p>
+<h4 id="避免闭包设计"><a href="#避免闭包设计" class="headerlink" title="避免闭包设计"></a>避免闭包设计</h4><p>无论是前端后端，只要是做 js 的，那么面试的时候应该很经常能遇到一个问题，那就是闭包。对于闭包的知识，可以自行百度，这里就不展开。中间件中避免闭包的设计，主要是闭包是引起内存泄露的一个因素。在中间件中，不规范的闭包设计会造成故障排查的困难（内存泄露没有错误堆栈可以看啊！😣）。</p>
+<p>举个例子🌰：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">ClosureInMiddleware</span>(<span class="params">ctx, next</span>) </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">setSomethingToReq</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        ctx.req[<span class="built_in">Symbol</span>.for(<span class="string">'Somthing'</span>)] = <span class="built_in">Date</span>.now();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">await</span> next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/22/X-Y-PROBLEM/"/>
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1637,388 +2024,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/23/css3-动画性能优化-1/"/>
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Xuezi"/>
-      <meta itemprop="description" content="javascript lover"/>
-      <meta itemprop="image" content="/images/avatar.gif"/>
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="xuezi's blog"/>
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2017/01/23/css3-动画性能优化-1/" class="post-title-link" itemprop="url">css3 动画性能优化(1)</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2017-01-23 13:33:03" itemprop="dateCreated datePublished" datetime="2017-01-23T13:33:03+08:00">2017-01-23</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-05-22 10:46:37" itemprop="dateModified" datetime="2019-05-22T10:46:37+08:00">2019-05-22</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>在传统网页上动画一般都是通过 Javascript 或 flash 来实现，但是 html5 的时代的到来，CSS 的进化，让动画实现起来更加 easy。</p>
-<p>现代的浏览器通常会有两个重要的执行线程，这2个线程协同工作来渲染一个网页</p>
-<ul>
-<li>主线程</li>
-<li>合成线程</li>
-</ul>
-<p>一般情况下，主线程负责：</p>
-<ul>
-<li>运行 JavaScript。</li>
-<li>计算 HTML 元素的 CSS 样式。</li>
-<li>页面的布局</li>
-<li>将元素绘制到一个或多个位图中</li>
-<li>将这些位图交给合成线程</li>
-</ul>
-<p>相应地，合成线程负责：</p>
-<ul>
-<li>通过 GPU 将位图绘制到屏幕上</li>
-<li>通知主线程更新页面中可见或即将变成可见的部分的位图</li>
-<li>计算出页面中哪部分是可见的</li>
-<li>计算出当你在滚动页面时哪部分是即将变成可见的</li>
-<li>当你滚动页面时将相应位置的元素移动到可视区域</li>
-</ul>
-<h2 id="Example-width-过渡"><a href="#Example-width-过渡" class="headerlink" title="Example width 过渡"></a>Example width 过渡</h2><p>我们绘制一个新闻卡片，让其在鼠标移上时产生动画，为了节省时间，css 采用 sass/scss 编译</p>
-<p>html 代码：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"box"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"img-box"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"./images/baobao.jpeg"</span> /&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"content"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span>hello world<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span>hello world<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span>hello world<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span>hello world<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span>hello world<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p>scss 代码：<br><figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.box</span> &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">120px</span>;</span><br><span class="line">  <span class="attribute">box-shadow</span>: <span class="number">0</span> <span class="number">0</span> <span class="number">10px</span> <span class="number">0</span> <span class="number">#777</span>;</span><br><span class="line">  @<span class="keyword">include</span> comic(.<span class="number">3</span>);</span><br><span class="line">  &amp;:hover &#123;</span><br><span class="line">    -webkit-<span class="attribute">animation</span>: box <span class="number">1s</span> forwards;</span><br><span class="line">    <span class="selector-class">.content</span> &#123;</span><br><span class="line">      -webkit-<span class="attribute">animation</span>: content <span class="number">1s</span> forwards;</span><br><span class="line">      -webkit-<span class="attribute">animation-delay</span>: .<span class="number">5s</span>;</span><br><span class="line">      <span class="selector-tag">p</span> &#123;</span><br><span class="line">        -webkit-<span class="attribute">animation</span>: p <span class="number">1s</span> forwards;</span><br><span class="line">        -webkit-<span class="attribute">animation-delay</span>: .<span class="number">5s</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">50%</span>;</span><br><span class="line">  <span class="attribute">overflow</span>: hidden;</span><br><span class="line">  <span class="selector-class">.img-box</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="selector-tag">img</span> &#123;</span><br><span class="line">      <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="selector-class">.content</span> &#123;</span><br><span class="line">    <span class="attribute">padding</span>: <span class="number">0</span>;</span><br><span class="line">    <span class="selector-tag">p</span> &#123;</span><br><span class="line">      <span class="attribute">height</span>: <span class="number">0</span>;</span><br><span class="line">      <span class="attribute">margin</span>: <span class="number">0</span>;</span><br><span class="line">      <span class="attribute">line-height</span>: <span class="number">20px</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@keyframes box &#123;</span><br><span class="line">  0% &#123;&#125;</span><br><span class="line">  100% &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">200px</span>;</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@keyframes content &#123;</span><br><span class="line">  0% &#123;&#125;</span><br><span class="line">  100% &#123;</span><br><span class="line">    <span class="attribute">padding</span>: <span class="number">10px</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@keyframes p &#123;</span><br><span class="line">  0% &#123;&#125;</span><br><span class="line">  100% &#123;</span><br><span class="line">    <span class="attribute">height</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">margin</span>: <span class="number">1em</span> <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@<span class="keyword">mixin</span> comic(<span class="variable">$time</span>) &#123;</span><br><span class="line">  -webkit-<span class="attribute">transition</span>: #&#123;<span class="variable">$time</span>&#125;s ease-in-out;</span><br><span class="line">  -moz-<span class="attribute">transition</span>: #&#123;<span class="variable">$time</span>&#125;s ease-in-out;</span><br><span class="line">  -ms-<span class="attribute">transition</span>: #&#123;<span class="variable">$time</span>&#125;s ease-in-out;</span><br><span class="line">  -o-<span class="attribute">transition</span>: #&#123;<span class="variable">$time</span>&#125;s ease-in-out;</span><br><span class="line">  <span class="attribute">transition</span>: #&#123;<span class="variable">$time</span>&#125;s ease-in-out;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>鼠标悬停时，会产生如下效果<br><img src="http://cdn-public.imxuezi.com/css-animation01.gif" alt=""></p>
-<p>打开 chrome 浏览器的 timeline 观看整个动画绘制情况<br><img src="http://cdn-public.imxuezi.com/animate04.png" alt=""></p>
-<p>从 range 可以看出 redering 和 painting 所花费的时间情况，整个动画稳定在 55-60 fps 左右。这是在配置较好的笔记本上的情况，尝试在<br>较为旧款的设备上查看，有时会降为 40 fps 左右，略有卡顿。</p>
-<p>容器宽度（width）动画流程大致如下：<br><img src="http://cdn-public.imxuezi.com/design01.png" alt=""></p>
-<p>左线程为主线程，右线程为合成线程</p>
-<p>如图所示，浏览器在进行一次 css 动画的时候，需要将动画进行切片，每进行一次帧过渡，都需要主线程与合成线程进行协调。<br>在动画的每一帧中，浏览器都要执行布局、 绘制、 以及将新的位图提交给 GPU。我们知道，将位图加载到 GPU 的内存中是一个相对较慢的操作。</p>
-<p>浏览器需要做大量工作的原因在于每一帧中元素的内容都在不断改变。改变一个元素的高度可能导致需要同步改变它的子元素的大小，<br>所以浏览器必须重新计算布局。布局完成后，主线程又必须重新生成该元素的位图。浏览器需要做大量的工作，也就是说这个动画可能会变得卡顿。</p>
-<h2 id="scale-过渡"><a href="#scale-过渡" class="headerlink" title="scale 过渡"></a>scale 过渡</h2><p>将 width 的数值过渡改成缩放过渡<br><figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.box</span> &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">200px</span>;</span><br><span class="line">  <span class="attribute">box-shadow</span>: <span class="number">0</span> <span class="number">0</span> <span class="number">10px</span> <span class="number">0</span> <span class="number">#777</span>;</span><br><span class="line">  @<span class="keyword">include</span> comic(.<span class="number">3</span>);</span><br><span class="line">  -webkit-<span class="attribute">transform</span>: scale(.<span class="number">6</span>);</span><br><span class="line">  &amp;:hover &#123;</span><br><span class="line">    -webkit-<span class="attribute">animation</span>: box <span class="number">1s</span> forwards;</span><br><span class="line">    <span class="selector-class">.content</span> &#123;</span><br><span class="line">      -webkit-<span class="attribute">animation</span>: content <span class="number">1s</span> forwards;</span><br><span class="line">      -webkit-<span class="attribute">animation-delay</span>: .<span class="number">5s</span>;</span><br><span class="line">      <span class="selector-tag">p</span> &#123;</span><br><span class="line">        -webkit-<span class="attribute">animation</span>: p <span class="number">1s</span> forwards;</span><br><span class="line">        -webkit-<span class="attribute">animation-delay</span>: .<span class="number">5s</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="attribute">border-radius</span>: <span class="number">50%</span>;</span><br><span class="line">  <span class="attribute">overflow</span>: hidden;</span><br><span class="line">  <span class="selector-class">.img-box</span> &#123;</span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    <span class="selector-tag">img</span> &#123;</span><br><span class="line">      <span class="attribute">width</span>: <span class="number">100%</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="selector-class">.content</span> &#123;</span><br><span class="line">    <span class="attribute">padding</span>: <span class="number">0</span>;</span><br><span class="line">    <span class="selector-tag">p</span> &#123;</span><br><span class="line">      <span class="attribute">height</span>: <span class="number">0</span>;</span><br><span class="line">      <span class="attribute">margin</span>: <span class="number">0</span>;</span><br><span class="line">      <span class="attribute">line-height</span>: <span class="number">20px</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@keyframes box &#123;</span><br><span class="line">  0% &#123;&#125;</span><br><span class="line">  100% &#123;</span><br><span class="line">    -webkit-<span class="attribute">transform</span>: scale(<span class="number">1</span>);</span><br><span class="line">    <span class="attribute">border-radius</span>: <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@keyframes content &#123;</span><br><span class="line">  0% &#123;&#125;</span><br><span class="line">  100% &#123;</span><br><span class="line">    <span class="attribute">padding</span>: <span class="number">10px</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">@keyframes p &#123;</span><br><span class="line">  0% &#123;&#125;</span><br><span class="line">  100% &#123;</span><br><span class="line">    <span class="attribute">height</span>: <span class="number">20px</span>;</span><br><span class="line">    <span class="attribute">margin</span>: <span class="number">1em</span> <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>同样打开 chrome 浏览器的 timeline 观看整个动画绘制情况<br><img src="http://cdn-public.imxuezi.com/animate01.png" alt=""></p>
-<p>会发现 rendering 和 painting 的时间都缩短了。<br><img src="http://cdn-public.imxuezi.com/animate03.png" alt=""></p>
-<p>同时在时间轴上可以看到最大可以达到 90 几 fps（有时可以达到100以上）</p>
-<p>容器宽度（width）动画流程大致如下：<br><img src="http://cdn-public.imxuezi.com/design02.png" alt=""></p>
-<p>我们可以看到少了很多主线成与合成线程之间的交换，意味着动画变得更流畅了。</p>
-<h2 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h2><p>根据定义，CSS 的transform属性不会更改元素或它周围的元素的布局。transform属性会对元素的整体产生影响，<br>它会对整个元素进行缩放、旋转、移动处理。</p>
-<p>而改变 width, height, maigin 等属性的时候，会造成元素布局的重排而触发重绘，影响 gpu 的线性计算。</p>
-<p>这只是一个相对简单的动画实例，对比情况并不明显，在涉及内连元素较多的动画同时进行时，对比会更为突出。</p>
-<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>进行用以下属性来做 css 动画</p>
-<ul>
-<li>CSS transform</li>
-<li>CSS opacity</li>
-<li>CSS filter（取决于filter的复杂度以及浏览器的实现）<br>避免使用 height,width,margin,padding 等；</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/18/CSS3-border-radius/"/>
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Xuezi"/>
-      <meta itemprop="description" content="javascript lover"/>
-      <meta itemprop="image" content="/images/avatar.gif"/>
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="xuezi's blog"/>
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2017/01/18/CSS3-border-radius/" class="post-title-link" itemprop="url">CSS3 border-radius</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2017-01-18 13:26:11" itemprop="dateCreated datePublished" datetime="2017-01-18T13:26:11+08:00">2017-01-18</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">Edited on</span>
-                
-                <time title="Modified: 2019-05-22 10:46:37" itemprop="dateModified" datetime="2019-05-22T10:46:37+08:00">2019-05-22</time>
-              
-            
-          </span>
-
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>早些年CSS3 border-radius 的文档或者文章，会发现，根本就没有提过百分比值这一茬。究其原因，是因为百分比值的支持是后来才支持的，<br>跟数值不是一起出来的。比方说某些老版本的 Android 机子，border-radius:50% 它就不认识。</p>
-<p>早期浏览器支持 border-radius 都是浏览器标准实现，并不形成统一标准。兼容旧版本浏览器需要用到浏览器内核前缀 -webkit-border-radius, -moz-border-radius。<br>浏览器个把年前就把私有前缀给去掉了，现在完全没必要使用。</p>
-<h2 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h2><p>border-radius 是向块级元素添加圆角边框。</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>既然是添加圆角边框，那么圆角边框是怎么被确定出来的，为什么这么多。</p>
-<p>首先确定圆角边框其实就是一个弧边。一个标准的圆角弧边是由圆裁切出来的。圆的半径决定了圆的大小，也就决定了弧边裁剪出来的弧长和弧度。</p>
-<h2 id="border-radius-绝对数值"><a href="#border-radius-绝对数值" class="headerlink" title="border-radius 绝对数值"></a>border-radius 绝对数值</h2><p>border-radius 的值是绝对像素数值 apx(px是单位像素) 的时候，切出来的弧边正好是一个以 apx 为半径的圆的 1/4 圆角弧边。</p>
-<p>例如，一个宽高为 200px 的正方形 div， 设置 50px 的 border-radius，圆角边框就是 50px 为半径的圆的 1/4 圆角弧边<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined">.square&#123;</span></span><br><span class="line"><span class="undefined">	width: 200px;</span></span><br><span class="line"><span class="undefined">	height:200px;</span></span><br><span class="line"><span class="undefined">	border: 1px solid #000;</span></span><br><span class="line"><span class="undefined">	margin-right: 100px;</span></span><br><span class="line"><span class="undefined">	display:inline-block</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined">.radius&#123;</span></span><br><span class="line"><span class="undefined">	border-radius: 50px;</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square radius'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p><img src="http://cdn-public.imxuezi.com/radius01.png" alt=""></p>
-<p>当 apx 为正方形 div 边长的一半时，div 正好是一个正圆<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.radius</span>&#123;</span><br><span class="line">	<span class="attribute">border-radius</span>: <span class="number">100px</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><img src="http://cdn-public.imxuezi.com/radius02.png" alt=""></p>
-<p>apx 的最大值是元素边长的一半, 当 apx 超过一半时，将自动取边长的一半<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.radius</span>&#123;</span><br><span class="line">	<span class="attribute">border-radius</span>: <span class="number">150px</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><img src="http://cdn-public.imxuezi.com/radius02.png" alt=""></p>
-<p>如果 div 是一个长方形，那么 border-radius 的取值最大是最短边的一半<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="css"><span class="selector-class">.square</span>&#123;</span></span><br><span class="line"><span class="undefined">	width: 400px;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">height</span><span class="selector-pseudo">:200px</span>;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">border</span>: 1<span class="selector-tag">px</span> <span class="selector-tag">solid</span> <span class="selector-id">#000</span>;</span></span><br><span class="line"><span class="undefined">	margin-right: 100px;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">display</span><span class="selector-pseudo">:inline-block</span></span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="css"><span class="selector-class">.radius</span>&#123;</span></span><br><span class="line"><span class="undefined">	border-radius: 150px;</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square radius'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p><img src="http://cdn-public.imxuezi.com/radius03.png" alt=""></p>
-<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.square</span>&#123;</span><br><span class="line">	<span class="attribute">width</span>: <span class="number">200px</span>;</span><br><span class="line">	<span class="attribute">height</span>:<span class="number">400px</span>;</span><br><span class="line">	<span class="attribute">border</span>: <span class="number">1px</span> solid <span class="number">#000</span>;</span><br><span class="line">	<span class="attribute">margin-right</span>: <span class="number">100px</span>;</span><br><span class="line">	<span class="attribute">display</span>:inline-block</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="http://cdn-public.imxuezi.com/radius04.png" alt=""></p>
-<h2 id="border-radius-百分比值"><a href="#border-radius-百分比值" class="headerlink" title="border-radius 百分比值"></a>border-radius 百分比值</h2><p>现代浏览器为 border-radius 加入了半分比值的支持。半分比值生成的圆角边框，是从元素顶点处，往两个邻边取出边长的一半的半分比长度所确定的椭圆的 1/4 弧边<br>首先我们了解，标准椭圆的确定概念</p>
-<p>椭圆（Ellipse）是平面内到定点F1、F2的距离之和等于常数（大于|F1F2|）的动点P的轨迹，F1、F2称为椭圆的两个焦点。其数学表达式为：|PF1|+|PF2|=2a（2a&gt;|F1F2|）。<br><img src="http://cdn-public.imxuezi.com/border-radius.jpg" alt=""></p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="css"><span class="selector-class">.square</span>&#123;</span></span><br><span class="line"><span class="undefined">	width: 200px;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">height</span><span class="selector-pseudo">:200px</span>;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">border</span>: 1<span class="selector-tag">px</span> <span class="selector-tag">solid</span> <span class="selector-id">#000</span>;</span></span><br><span class="line"><span class="undefined">	margin-right: 100px;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">display</span><span class="selector-pseudo">:inline-block</span></span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="css"><span class="selector-class">.radius</span>&#123;</span></span><br><span class="line"><span class="undefined">	border-radius: 20%;</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square radius'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p><img src="http://cdn-public.imxuezi.com/radius05.png" alt=""></p>
-<p>F1, F2 的位置是浏览器给出，因此很难说其切面弧角的大小。</p>
-<p>百分比值最大取到 50%，即为各边一半，超过 50% 按照 50%计算。<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.radius</span>&#123;</span><br><span class="line">	<span class="attribute">border-radius</span>: <span class="number">50%</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><img src="http://cdn-public.imxuezi.com/radius06.png" alt=""></p>
-<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.radius</span>&#123;</span><br><span class="line">	<span class="attribute">border-radius</span>: <span class="number">80%</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="http://cdn-public.imxuezi.com/radius06.png" alt=""></p>
-<h2 id="多个参数"><a href="#多个参数" class="headerlink" title="多个参数"></a>多个参数</h2><p>border-radius 支持传入多个参数进行设置圆角边框，只有一个参数时表示4个角的圆角是一样的，多个参数时即为每个角单独设置，顺序是：左上，右上，右下，左下<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="css"><span class="selector-class">.square</span>&#123;</span></span><br><span class="line"><span class="undefined">	width: 200px;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">height</span><span class="selector-pseudo">:200px</span>;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">border</span>: 1<span class="selector-tag">px</span> <span class="selector-tag">solid</span> <span class="selector-id">#000</span>;</span></span><br><span class="line"><span class="undefined">	margin-right: 100px;</span></span><br><span class="line"><span class="css">	<span class="selector-tag">display</span><span class="selector-pseudo">:inline-block</span></span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="css"><span class="selector-class">.radius</span>&#123;</span></span><br><span class="line"><span class="undefined">	border-radius: 10px 20px 20px 20%;</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">'square radius'</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p><img src="http://cdn-public.imxuezi.com/radius07.png" alt="">;</p>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2065,7 +2070,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-count">19</span>
                     <span class="site-state-item-name">posts</span>
                   </a>
                 </div>
@@ -2114,7 +2119,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">15</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
                     <span class="site-state-item-name">tags</span>
                   </a>
                 </div>

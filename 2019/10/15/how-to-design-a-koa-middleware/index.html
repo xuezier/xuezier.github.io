@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2"/>
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1"/>
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="前言该中间件设计规范是我们在平时工作中实践总结的经验之谈，欢迎小伙伴吐槽改善。 Middleware中间件在 node.js 的 web 应用中是非常常见的一个功能设计。众多 web 框架（express、koa、nest.js、connect 等）都有中间件的设计支持。虽然不同框架中间件没有统一的设计规范，但在功能和实现上几乎是异曲同工的。 中间件在 web 服务中主要的作用就是访问 reque">
+<meta name="keywords" content="node.js,javascript,koa,middleware">
+<meta property="og:type" content="article">
+<meta property="og:title" content="how to design a koa middleware">
+<meta property="og:url" content="http://yoursite.com/2019/10/15/how-to-design-a-koa-middleware/index.html">
+<meta property="og:site_name" content="xuezi&#39;s blog">
+<meta property="og:description" content="前言该中间件设计规范是我们在平时工作中实践总结的经验之谈，欢迎小伙伴吐槽改善。 Middleware中间件在 node.js 的 web 应用中是非常常见的一个功能设计。众多 web 框架（express、koa、nest.js、connect 等）都有中间件的设计支持。虽然不同框架中间件没有统一的设计规范，但在功能和实现上几乎是异曲同工的。 中间件在 web 服务中主要的作用就是访问 reque">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-10-15T13:40:08.489Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="how to design a koa middleware">
+<meta name="twitter:description" content="前言该中间件设计规范是我们在平时工作中实践总结的经验之谈，欢迎小伙伴吐槽改善。 Middleware中间件在 node.js 的 web 应用中是非常常见的一个功能设计。众多 web 框架（express、koa、nest.js、connect 等）都有中间件的设计支持。虽然不同框架中间件没有统一的设计规范，但在功能和实现上几乎是异曲同工的。 中间件在 web 服务中主要的作用就是访问 reque">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/10/15/how-to-design-a-koa-middleware/"/>
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>how to design a koa middleware | xuezi's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">xuezi's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>Home</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>Archives</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/15/how-to-design-a-koa-middleware/"/>
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Xuezi"/>
+      <meta itemprop="description" content="javascript lover"/>
+      <meta itemprop="image" content="/images/avatar.gif"/>
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xuezi's blog"/>
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">how to design a koa middleware
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2019-10-15 20:44:55 / Modified: 21:40:08" itemprop="dateCreated datePublished" datetime="2019-10-15T20:44:55+08:00">2019-10-15</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>该中间件设计规范是我们在平时工作中实践总结的经验之谈，欢迎小伙伴吐槽改善。</p>
+<h3 id="Middleware"><a href="#Middleware" class="headerlink" title="Middleware"></a>Middleware</h3><p>中间件在 node.js 的 web 应用中是非常常见的一个功能设计。众多 web 框架（express、koa、nest.js、connect 等）都有中间件的设计支持。虽然不同框架中间件没有统一的设计规范，但在功能和实现上几乎是异曲同工的。</p>
+<p>中间件在 web 服务中主要的作用就是访问 request 和 response 对象，完成特定任务后下发到下一个中间件。中间件的设计极大的对请求进行了分片化，可以让很多原本需要在 controller 中处理的问题更方便的做统一的逻辑处理。</p>
+<p>我根据中间件的生成主要将其分为两种</p>
+<ul>
+<li>工厂化中间件<ul>
+<li>简单来讲就是有一个工厂函数，根据传入的参数动态生成的中间件，这样的中间件会根据传入的参数不同可能会有不同的处理逻辑</li>
+</ul>
+</li>
+<li>静态中间件<ul>
+<li>从一开始就确定工作内容的中间件</li>
+</ul>
+</li>
+</ul>
+<h3 id="设计规范"><a href="#设计规范" class="headerlink" title="设计规范"></a>设计规范</h3><p>middleware 和 controller 都可以访问 request 和 response 对象，也可完成和 controller 一样的事情，那么 middleware 和 controller 有什么区别呢？</p>
+<p>首先 middleware 的设计应该遵守以下几个规范：</p>
+<ul>
+<li>去中心化的</li>
+<li>避免闭包设计</li>
+<li>无论是工厂化中间件还是静态中间件，一旦确定在 runtime 就是不可变更的</li>
+</ul>
+<h4 id="去中心化"><a href="#去中心化" class="headerlink" title="去中心化"></a>去中心化</h4><p>这是和 controller 设计区别最大的地方。</p>
+<p>事实上，controller 也可以算是一个中间件，但是 controller 通常是设计为具有业务相关性的方法，我将 controller 在 node 中的设计定位 fake-middleware。</p>
+<p>而我们需要真正去设计的 middleware 应该是具有业务无关性的，一个无状态的去中心化的方法。middleware 应该具有更强的通用普适性，这个通用性分为两种，一种是应用相关的，一种是应用无关的。</p>
+<p>先说应用相关性的中间件：例如一个短信应用，通常会有各种防刷机制，这种预防机制通常是在中间件中实现的。短信的防刷和短信发送本身是业务无关的，但是短信防刷机制通常只在短信相关应用（用户系统，短信系统等）中需要。这种中间件就是具有应用相关性的。</p>
+<p>再说应用无关性的中间件：很常见的一些中间件如 cors、body-parser 等，都是具有非常强的通用性，而且和任何类型应用都没有相关性。</p>
+<p>最后，无状态的去中心化怎么理解？举个例子，在 Java 应用中，controller 通常会先对请求的参数做参数检查。在 node 中可以通过中间件来做统一的参数检查。但是不同的接口通常都需要不同的参数，如果每个接口都设计一个 middleware 来做参数检查，那就显得很鸡肋（我干嘛做这种蠢事？）。但实际上我还真见到过😂。</p>
+<p>以 egg 为例，我们通过两个例子看一下<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// example-1 - bad</span></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">ParamterValidateMiddleware</span>(<span class="params">ctx, next</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; body &#125; = ctx.request;</span><br><span class="line"></span><br><span class="line">    ctx.validate(&#123;</span><br><span class="line">        param1: <span class="string">'string'</span>,</span><br><span class="line">        param2: <span class="string">'number'</span></span><br><span class="line">    &#125;, body);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">await</span> next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// example-2 - good</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ParamterValidateMiddlewareFactory</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">ParamterValidateMiddleware</span>(<span class="params">ctx, next</span>) </span>&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; body &#125; = ctx.request;</span><br><span class="line">        <span class="keyword">const</span> &#123; rules &#125; = options;</span><br><span class="line"></span><br><span class="line">        ctx.validate(rules, body);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">await</span> next();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>example-1 的设计只能针对单一的接口，如果参数发生变动，就需要修改对应的 middlware 方法。</p>
+<p>example-2 将参数校验进行工厂化设计，通过传入的 rules，动态生成对应接口所需的中间件，那么就可以在全局维护统一的参数表。</p>
+<h4 id="避免闭包设计"><a href="#避免闭包设计" class="headerlink" title="避免闭包设计"></a>避免闭包设计</h4><p>无论是前端后端，只要是做 js 的，那么面试的时候应该很经常能遇到一个问题，那就是闭包。对于闭包的知识，可以自行百度，这里就不展开。中间件中避免闭包的设计，主要是闭包是引起内存泄露的一个因素。在中间件中，不规范的闭包设计会造成故障排查的困难（内存泄露没有错误堆栈可以看啊！😣）。</p>
+<p>举个例子🌰：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">ClosureInMiddleware</span>(<span class="params">ctx, next</span>) </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">setSomethingToReq</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        ctx.req[<span class="built_in">Symbol</span>.for(<span class="string">'Somthing'</span>)] = <span class="built_in">Date</span>.now();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">await</span> next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/node-js/" rel="tag"># node.js</a>
+          
+            <a href="/tags/javascript/" rel="tag"># javascript</a>
+          
+            <a href="/tags/koa/" rel="tag"># koa</a>
+          
+            <a href="/tags/middleware/" rel="tag"># middleware</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/05/22/X-Y-PROBLEM/" rel="next" title="X-Y PROBLEM">
+                <i class="fa fa-chevron-left"></i> X-Y PROBLEM
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/24/egg-打造高可用服务集群/" rel="prev" title="egg.js 打造高可用服务集群">
+                egg.js 打造高可用服务集群 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Xuezi</p>
+              <div class="site-description motion-element" itemprop="description">javascript lover</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">18</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Middleware"><span class="nav-number">2.</span> <span class="nav-text">Middleware</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#设计规范"><span class="nav-number">3.</span> <span class="nav-text">设计规范</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#去中心化"><span class="nav-number">3.1.</span> <span class="nav-text">去中心化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#避免闭包设计"><span class="nav-number">3.2.</span> <span class="nav-text">避免闭包设计</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xuezi</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.1.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/schemes/muse.js?v=7.1.1"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
